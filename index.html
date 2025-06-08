@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	 <link rel="icon" type="image/png" href="iconepq.png">
+    <title>PenseQuiz IA</title>
+    <!-- Estilos CSS embutidos -->
+    <style>
+        /* Define o estilo base para o corpo da página */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center; /* Centraliza o conteúdo horizontalmente */
+            align-items: center;    /* Centraliza o conteúdo verticalmente */
+            min-height: 100vh;      /* Garante que o corpo ocupe toda a altura da viewport */
+            background-color: #282c34; /* Cor de fundo escura para a página */
+            font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada para efeito terminal */
+            color: #00ff00; /* Cor verde brilhante para o texto, simulando um terminal antigo */
+            overflow: hidden; /* Previne barras de rolagem indesejadas no corpo */
+        }
+
+        /* Estilo para o contêiner principal do terminal */
+        .terminal-container {
+            width: 95%; /* Largura relativa para responsividade */
+            max-width: 1200px; /* Largura máxima para evitar que fique muito grande em telas amplas */
+            height: 85vh; /* Altura relativa para responsividade, ocupando mais da tela */
+            background-color: #1a1a1a; /* Fundo do terminal um pouco mais escuro */
+            border: 2px solid #00ff00; /* Borda verde sólida */
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7); /* Sombra verde "brilhante" para efeito de luminescência */
+            display: flex;
+            flex-direction: column; /* Organiza os elementos verticalmente */
+            position: relative;
+            overflow: hidden; /* Esconde qualquer conteúdo que transborde */
+            border-radius: 8px; /* Cantos arredondados para um visual mais suave */
+        }
+
+        /* Estilo para o cabeçalho do terminal */
+        .terminal-header {
+            background-color: #00ff00; /* Fundo verde para o cabeçalho */
+            color: #1a1a1a; /* Texto escuro no cabeçalho */
+            padding: 8px 15px;
+            display: flex;
+            justify-content: center; /* CENTRALIZA o conteúdo horizontalmente */
+            align-items: center;
+            font-weight: bold;
+            border-bottom: 2px solid #00cc00; /* Borda inferior mais escura */
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+
+        /* Estilo para o título do terminal */
+        .terminal-title {
+            font-size: 1.1em;
+        }
+
+        /* Área de saída do terminal onde as mensagens são exibidas */
+        .terminal-output {
+            flex-grow: 1; /* Ocupa o espaço restante verticalmente */
+            padding: 15px;
+            overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo for grande */
+            white-space: pre-wrap; /* Mantém a formatação do texto (quebras de linha, espaços) */
+            word-wrap: break-word; /* Quebra palavras longas para caber na linha */
+            scrollbar-width: thin; /* Estilo de barra de rolagem fina (Firefox) */
+            scrollbar-color: #00ff00 #1a1a1a; /* Cores da barra de rolagem (polegar e trilho) */
+        }
+
+        /* Estilo da barra de rolagem para navegadores WebKit (Chrome, Safari) */
+        .terminal-output::-webkit-scrollbar {
+            width: 8px; /* Largura da barra de rolagem */
+        }
+
+        .terminal-output::-webkit-scrollbar-track {
+            background: #1a1a1a; /* Fundo do trilho da barra de rolagem */
+        }
+
+        .terminal-output::-webkit-scrollbar-thumb {
+            background-color: #00ff00; /* Cor do "polegar" da barra de rolagem */
+            border-radius: 10px; /* Cantos arredondados para o polegar */
+            border: 2px solid #1a1a1a; /* Borda para o polegar */
+        }
+
+        /* Linha de entrada do usuário */
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-top: 2px solid #00ff00; /* Borda superior verde */
+            background-color: #1a1a1a;
+            /* Removidas bordas inferiores aqui, pois a barra separadora terá uma */
+            border-bottom-left-radius: 6px; 
+            border-bottom-right-radius: 6px; 
+        }
+
+        /* Estilo para o prompt (símbolo >) */
+        .prompt {
+            color: #00ff00;
+            margin-right: 5px;
+            font-size: 1.2em;
+        }
+
+        /* Campo de entrada de texto */
+        #terminalInput {
+            flex-grow: 1; /* Ocupa o espaço restante horizontalmente */
+            background-color: transparent; /* Fundo transparente */
+            border: none; /* Remove a borda padrão */
+            outline: none; /* Remove o contorno ao focar */
+            color: #00ff00; /* Cor do texto digitado (será sobrescrito para user-line) */
+            font-family: 'Courier New', Courier, monospace; /* Mesma fonte do terminal */
+            font-size: 1em;
+            caret-color: #00ff00; /* Cor do cursor de digitação */
+        }
+
+        /* Estilo para o placeholder do campo de entrada */
+        #terminalInput::placeholder {
+            color: #00cc00; /* Um verde um pouco mais escuro para o placeholder */
+            opacity: 0.7; /* Torna o placeholder um pouco transparente */
+        }
+
+        /* Barra separadora entre o input e os botões */
+        .separator-bar {
+            height: 2px; /* Altura da barra */
+            background-color: #00ff00; /* Cor da barra */
+            margin: 0; /* Remove margens extras */
+            border-top: 2px solid #00cc00; /* Adiciona uma borda superior para profundidade */
+            border-bottom-left-radius: 0; /* Remove as bordas arredondadas dos cantos da barra */
+            border-bottom-right-radius: 0;
+        }
+
+        /* Contêiner para os botões de controle, centralizado e com margem superior */
+        .terminal-controls {
+            padding: 5px 15px 15px; /* Ajuste o padding para dar espaço abaixo e nas laterais */
+            display: flex;
+            justify-content: center; /* Centraliza os botões */
+            gap: 10px; /* Espaçamento entre os botões */
+            background-color: #1a1a1a;
+            margin-top: 5px; /* Reduzido para aproximar os botões da barra */
+            border-bottom-left-radius: 6px; /* Adiciona bordas arredondadas aos cantos inferiores */
+            border-bottom-right-radius: 6px;
+        }
+
+        /* Estilo para os botões */
+        #clearButton, #sendButton {
+            background-color: transparent;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px; /* Diminui o padding para botões menores */
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8em; /* Diminui a fonte */
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); /* Sombra sutil para os botões */
+        }
+
+        #clearButton:hover, #sendButton:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        #clearButton:disabled, #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: transparent;
+            color: #00cc00;
+            box-shadow: none;
+        }
+        
+        /* Efeito de glitch sutil (opcional, pode ser removido se não desejar) */
+        @keyframes glitch {
+            0% { transform: translate(0, 0); opacity: 1; }
+            2% { transform: translate(-2px, 2px); opacity: 0.9; }
+            4% { transform: translate(2px, -2px); opacity: 1; }
+            6% { transform: translate(-1px, 1px); opacity: 0.8; }
+            8% { transform: translate(1px, -1px); opacity: 1; }
+            10% { transform: translate(0, 0); opacity: 1; }
+        }
+
+        /* Aplica o efeito de glitch a elementos com esta classe */
+        .glitch-text {
+            animation: glitch 0.5s infinite linear alternate;
+        }
+
+        /* Novo estilo para a cor das perguntas do usuário */
+        .user-line {
+            color: #ADD8E6; /* Azul claro para as perguntas do usuário */
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <!-- Cabeçalho do terminal com título centralizado (botões removidos) -->
+        <div class="terminal-header">
+            <span class="terminal-title">PenseQuiz IA</span>
+            <!-- Os botões de controle foram removidos daqui -->
+        </div>
+        <!-- Área onde as mensagens da IA e as entradas do usuário serão exibidas -->
+        <div class="terminal-output" id="terminalOutput">
+            <!-- Conteúdo será injetado aqui via JavaScript -->
+        </div>
+        
+        <!-- Linha de entrada do usuário -->
+        <div class="terminal-input-line">
+            <!-- Símbolo de prompt do terminal -->
+            <span class="prompt">></span>
+            <!-- Campo de entrada de texto para o usuário digitar comandos -->
+            <input type="text" id="terminalInput" placeholder="pergunte alguma coisa" autofocus>
+        </div>
+
+        <!-- Nova barra separadora -->
+        <div class="separator-bar"></div>
+
+        <!-- Contêiner para os botões de controle - AGORA ABAIXO DA LINHA DE ENTRADA -->
+        <div class="terminal-controls">
+            <button id="sendButton">Enviar</button> <!-- Botão Enviar -->
+            <button id="clearButton">Limpar Tela</button> <!-- Botão Limpar Tela -->
+        </div>
+    </div>
+
+    <!-- Lógica JavaScript embutida -->
+    <script>
+        // Aguarda o carregamento completo do DOM antes de executar o script
+        document.addEventListener('DOMContentLoaded', () => {
+            // Obtém referências para os elementos HTML de saída e entrada do terminal
+            const terminalOutput = document.getElementById('terminalOutput');
+            const terminalInput = document.getElementById('terminalInput');
+            const clearButton = document.getElementById('clearButton'); // Referência ao botão Limpar
+            const sendButton = document.getElementById('sendButton'); // Referência ao novo botão Enviar
+
+            // Variável para armazenar o histórico da conversa com o LLM
+            let chatHistory = [];
+
+            // Variável para controle da autenticação do Firebase (usada para Firestore, mas aqui para API Key)
+            const apiKey = ""; // Deixe como está. A chave API será fornecida em tempo de execução pelo Canvas.
+
+            /**
+             * Adiciona uma nova linha de texto ao terminal.
+             * @param {string} text O texto a ser exibido.
+             * @param {boolean} isUser Indica se a linha é uma entrada do usuário (true) ou uma mensagem da IA (false).
+             * @param {boolean} isError Indica se a linha é uma mensagem de erro (true).
+             */
+            function addLineToTerminal(text, isUser = false, isError = false) {
+                const line = document.createElement('div'); // Cria um novo elemento div para a linha
+                // Adiciona o prefixo '>' se for uma entrada do usuário
+                line.textContent = isUser ? `> ${text}` : text;
+                if (isUser) { // Adiciona a classe para mudar a cor da pergunta do usuário
+                    line.classList.add('user-line');
+                }
+                if (isError) {
+                    line.style.color = '#ff5f56'; // Cor vermelha para mensagens de erro
+                }
+                
+                // Anexa a nova linha ao contêiner de saída do terminal
+                terminalOutput.appendChild(line);
+                // Garante que o terminal role automaticamente para a última linha adicionada
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }
+
+            /**
+             * Exibe as saudações iniciais da PenseQuiz IA quando o sistema está pronto.
+             */
+            function initialGreeting() {
+                addLineToTerminal("Olá! Eu sou PenseQuiz IA, seu assistente virtual avançado.");
+                addLineToTerminal("Sou sua IA em fase de TESTE pessoal para te ajudar com **qualquer assunto**.");
+                addLineToTerminal("Por exemplo, posso te auxiliar em:");
+                addLineToTerminal("- **Assuntos do ENEM:** História, Matemática, Ciências da Natureza, Linguagens, Redação, etc.");
+                addLineToTerminal("- **Economia:** Microeconomia, Macroeconomia, termos financeiros, mercados.");
+                addLineToTerminal("- **Termos técnicos:** Tecnologia, ciência, engenharia e muito mais!");
+                addLineToTerminal("---"); // Separador visual
+                addLineToTerminal("Digite 'ajuda' para ver comandos especiais.");
+                addLineToTerminal("Digite 'recursos' para uma lista detalhada do que posso fazer.");
+                addLineToTerminal("Ou simplesmente comece a digitar sua pergunta!");
+                terminalInput.disabled = false; // Habilita a entrada do usuário
+                clearButton.disabled = false; // Habilita o botão de limpar
+                sendButton.disabled = false; // Habilita o botão de enviar
+                terminalInput.focus(); // Coloca o foco no campo de entrada
+            }
+
+            /**
+             * Inicia a sequência de inicialização do "sistema operacional" da PenseQuiz IA.
+             */
+            function startBootSequence() {
+                terminalOutput.innerHTML = ''; // Limpa o terminal para a tela de boot
+                terminalInput.disabled = true; // Desabilita a entrada durante o boot
+                clearButton.disabled = true; // Desabilita o botão de limpar durante o boot
+                sendButton.disabled = true; // Desabilita o botão de enviar durante o boot
+
+                addLineToTerminal("INICIANDO SISTEMA PENSEQUIZ IA OS...");
+                setTimeout(() => {
+                    addLineToTerminal("Verificando integridade dos módulos...");
+                }, 1000);
+                setTimeout(() => {
+                    addLineToTerminal("Carregando kernel v1.2...");
+                }, 2000);
+                setTimeout(() => {
+                    addLineToTerminal("Conectando ao núcleo de IA... [OK]");
+                }, 3000);
+                setTimeout(() => {
+                    addLineToTerminal("Inicialização completa.");
+                    addLineToTerminal("------------------------------------");
+                    initialGreeting(); // Chama a saudação inicial após o boot
+                }, 4000); // Tempo total da sequência de boot
+            }
+
+            /**
+             * Função unificada para processar comandos do usuário (tanto por Enter quanto por botão Enviar).
+             */
+            async function handleUserCommand() {
+                const command = terminalInput.value.trim(); // Obtém o texto, remove espaços
+                if (command === '') {
+                    addLineToTerminal("Digite algo, por favor.");
+                    terminalInput.disabled = false;
+                    clearButton.disabled = false;
+                    sendButton.disabled = false;
+                    terminalInput.focus();
+                    return;
+                }
+
+                addLineToTerminal(command, true); // Exibe o comando do usuário no terminal
+                terminalInput.value = ''; // Limpa o campo de entrada após o comando ser enviado
+                terminalInput.disabled = true; // Desabilita a entrada enquanto processa
+                clearButton.disabled = true; // Desabilita o botão de limpar
+                sendButton.disabled = true; // Desabilita o botão de enviar
+
+                // Verifica comandos especiais antes de enviar para o LLM
+                const lowerCaseCommand = command.toLowerCase();
+                if (lowerCaseCommand === 'ajuda' || lowerCaseCommand === 'limpar' || 
+                    lowerCaseCommand === 'quem e voce' || lowerCaseCommand === 'ola' || 
+                    lowerCaseCommand === 'pensequiz' || lowerCaseCommand === 'data' || 
+                    lowerCaseCommand === 'recursos') { 
+                    processSpecialCommand(lowerCaseCommand);
+                    terminalInput.disabled = false;
+                    clearButton.disabled = false;
+                    sendButton.disabled = false;
+                    terminalInput.focus();
+                    return;
+                }
+
+                // Adiciona uma mensagem de "digitando" enquanto aguarda a resposta do LLM
+                const typingIndicator = document.createElement('div');
+                typingIndicator.textContent = "PenseQuiz IA está pensando...";
+                typingIndicator.classList.add('glitch-text'); // Opcional: Adiciona efeito de glitch
+                terminalOutput.appendChild(typingIndicator);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+                // Envia o comando para o LLM
+                await sendToLLM(command);
+
+                // Remove o indicador de "digitando"
+                terminalOutput.removeChild(typingIndicator);
+                terminalInput.disabled = false; // Reabilita a entrada
+                clearButton.disabled = false; // Reabilita o botão Limpar
+                sendButton.disabled = false; // Reabilita o botão Enviar
+                terminalInput.focus(); // Coloca o foco de volta no campo de entrada
+            }
+
+            // Adiciona um ouvinte de evento para a tecla 'Enter' no campo de entrada do terminal
+            terminalInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    handleUserCommand(); // Chama a função unificada
+                }
+            });
+
+            // Adiciona um ouvinte de evento para o botão de enviar
+            sendButton.addEventListener('click', handleUserCommand);
+
+            // Adiciona um ouvinte de evento para o botão de limpar
+            clearButton.addEventListener('click', () => {
+                // Chama a função de limpeza/reinicialização
+                processSpecialCommand('limpar');
+            });
+
+            /**
+             * Processa comandos especiais que não precisam do LLM.
+             * @param {string} command O comando especial a ser processado.
+             */
+            function processSpecialCommand(command) {
+                switch (command) {
+                    case 'ajuda':
+                        addLineToTerminal("Comandos especiais disponíveis:");
+                        addLineToTerminal("- 'ola': Para uma saudação.");
+                        addLineToTerminal("- 'quem e voce': Para saber mais sobre mim.");
+                        addLineToTerminal("- 'limpar': Para limpar a tela (reinicia o sistema).");
+                        addLineToTerminal("- 'pensequiz': Para uma resposta especial sobre meu nome.");
+                        addLineToTerminal("- 'data': Para saber a data e hora atuais.");
+                        addLineToTerminal("- 'recursos': Para ver uma lista detalhada do que posso fazer.");
+                        addLineToTerminal("Para qualquer outro assunto, basta digitar sua pergunta!");
+                        break;
+                    case 'ola':
+                        addLineToTerminal("Olá! Que bom te ver por aqui!");
+                        break;
+                    case 'quem e voce':
+                        addLineToTerminal("Eu sou a PenseQuiz IA, uma inteligência artificial avançada criada para te ajudar no seu terminal retrô.");
+                        addLineToTerminal("Fui projetada para conversar sobre uma vasta gama de tópicos, desde o ENEM até termos técnicos.");
+                        addLineToTerminal("Estou sempre aprendendo e me aprimorando!");
+                        break;
+                    case 'limpar':
+                        // Ao limpar, reinicia a sequência de boot para simular um "reinício"
+                        startBootSequence();
+                        break;
+                    case 'pensequiz':
+                        addLineToTerminal("Sim, sou eu, PenseQuiz IA! Um nome feito para pensar e questionar com você.");
+                        break;
+                    case 'data':
+                        const now = new Date();
+                        addLineToTerminal(`A data atual é: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
+                        break;
+                    case 'recursos': // Novo comando para listar recursos
+                        addLineToTerminal("Meus recursos incluem a capacidade de responder a perguntas sobre:");
+                        addLineToTerminal("- **Matérias do ENEM:** Física, Química, Biologia, Matemática, Português, História, Geografia, Filosofia, Sociologia.");
+                        addLineToTerminal("- **Economia:** Conceitos de mercado, finanças, macroeconomia, microeconomia, desenvolvimento econômico.");
+                        addLineToTerminal("- **Termos Técnicos:** Explicações sobre tecnologia, ciência, engenharia, programação, medicina, etc.");
+                        addLineToTerminal("- **Conhecimentos Gerais:** Perguntas sobre história, cultura, arte, eventos atuais e muito mais!");
+                        addLineToTerminal("Basta digitar sua pergunta de forma clara!");
+                        break;
+                    default:
+                        // Não deve cair aqui se a lógica do event listener estiver correta
+                        break;
+                }
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }
+
+            /**
+             * Envia o prompt do usuário para o LLM (Gemini API) e exibe a resposta.
+             * @param {string} prompt O texto da pergunta do usuário.
+             */
+            async function sendToLLM(prompt) {
+                // Adiciona o prompt do usuário ao histórico da conversa
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = { contents: chatHistory };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('Erro da API:', errorData);
+                        addLineToTerminal("Erro: Não foi possível conectar ao núcleo da IA. Tente novamente mais tarde.", false, true);
+                        chatHistory.pop(); // Remove a última entrada do usuário do histórico em caso de erro
+                        return;
+                    }
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        addLineToTerminal(text); // Exibe a resposta do LLM no terminal
+                        // Adiciona a resposta do LLM ao histórico
+                        chatHistory.push({ role: "model", parts: [{ text: text }] });
+                    } else {
+                        addLineToTerminal("PenseQuiz IA não conseguiu formular uma resposta. Tente reformular sua pergunta.", false, true);
+                        console.error("Estrutura de resposta inesperada da API:", result);
+                        chatHistory.pop(); // Remove a última entrada do usuário do histórico em caso de erro
+                    }
+                } catch (error) {
+                    console.error('Erro na requisição fetch:', error);
+                    addLineToTerminal("Erro de conexão: Verifique sua internet ou tente novamente.", false, true);
+                    chatHistory.pop(); // Remove a última entrada do usuário do histórico em caso de erro
+                }
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            }
+
+            // Inicia a sequência de boot ao carregar a página
+            startBootSequence();
+        });
+    </script>
+</body>
+</html>
