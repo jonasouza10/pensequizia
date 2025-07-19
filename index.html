@@ -271,6 +271,7 @@
                 addLineToTerminal("---"); // Separador visual
                 addLineToTerminal("Digite 'ajuda' para ver comandos especiais.");
                 addLineToTerminal("Digite 'recursos' para uma lista detalhada do que posso fazer.");
+                addLineToTerminal("Para buscar informações na web, digite 'pesquisar no google sobre [sua pergunta]'."); // Nova linha para a funcionalidade de busca
                 addLineToTerminal("Ou simplesmente comece a digitar sua pergunta!");
                 terminalInput.disabled = false; // Habilita a entrada do usuário
                 clearButton.disabled = false; // Habilita o botão de limpar
@@ -413,6 +414,7 @@
                         addLineToTerminal("- **Economia:** Conceitos de mercado, finanças, macroeconomia, microeconomia, desenvolvimento econômico.");
                         addLineToTerminal("- **Termos Técnicos:** Explicações sobre tecnologia, ciência, engenharia, programação, medicina, etc.");
                         addLineToTerminal("- **Conhecimentos Gerais:** Perguntas sobre história, cultura, arte, eventos atuais e muito mais!");
+                        addLineToTerminal("- **Busca na Web:** Você pode me pedir para pesquisar no Google. Basta digitar 'pesquisar no google sobre [sua pergunta]'."); // Nova linha para a funcionalidade de busca
                         addLineToTerminal("Basta digitar sua pergunta de forma clara!");
                         break;
                     default:
@@ -427,8 +429,28 @@
              * @param {string} prompt O texto da pergunta do usuário.
              */
             async function sendToLLM(prompt) {
-                // Adiciona o prompt do usuário ao histórico da conversa
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                let actualPrompt = prompt;
+                let isSearchRequest = false;
+                const searchPrefix = "pesquisar no google sobre ";
+                const searchPrefix2 = "buscar no google sobre ";
+
+                // Verifica se o prompt é uma solicitação de busca no Google
+                if (prompt.toLowerCase().startsWith(searchPrefix)) {
+                    actualPrompt = prompt.substring(searchPrefix.length).trim();
+                    isSearchRequest = true;
+                } else if (prompt.toLowerCase().startsWith(searchPrefix2)) {
+                    actualPrompt = prompt.substring(searchPrefix2.length).trim();
+                    isSearchRequest = true;
+                }
+
+                if (isSearchRequest) {
+                    // Quando uma solicitação de busca é feita, instrui o modelo a realizar uma busca
+                    // e incluir os resultados com links.
+                    chatHistory.push({ role: "user", parts: [{ text: `Por favor, pesquise no Google sobre "${actualPrompt}" e forneça um resumo das informações mais relevantes, incluindo links para as fontes.` }] });
+                } else {
+                    // Para perguntas regulares, apenas adiciona o prompt
+                    chatHistory.push({ role: "user", parts: [{ text: actualPrompt }] });
+                }
 
                 const payload = { contents: chatHistory };
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
